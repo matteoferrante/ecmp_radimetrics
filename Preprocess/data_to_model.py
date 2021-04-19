@@ -1,51 +1,7 @@
-"""Spiegazione:
-
-carico i dati
-rimuovo alcune colonne inutili (indici), calcolo l'età e rimuovo la DOB
-rimuovo altre colonne (Description, Acquisition Type ecc)
-rimuovo i valori Nan in colonne specifiche
-Inserisco i valori 0 nei CTDI e DLP quando sono zero
-
-
-"""
-
-
-import pandas as pd
-import numpy as np
-
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import GridSearchCV
-from sklearn.neural_network import MLPRegressor
+""" Questo codice fa tutto il preprocessing dei dati in modo da restituire subito i dati pronti"""
 from sklearn.preprocessing import LabelEncoder
 
-from sklearn.model_selection import cross_val_score
-
-import pickle
-
-from datetime import date
-import datetime
-from dateutil.relativedelta import relativedelta
-import math
-
-import matplotlib.pyplot as plt
-import argparse
-
-
 from Preprocess.RadimetricsPreprocessor import RadimetricsPreprocessor
-
-
-ap=argparse.ArgumentParser()
-ap.add_argument("-d", "--dataset",default=r"C:\Users\matte\Dropbox\fisica_medica\lavori_ieo\ml\radimetrics_train.csv")
-
-arg=vars(ap.parse_args())
-
-report=open("report","w")
-
-#load data
-
-print(f"[INFO] Reading data from {arg['dataset']}")
-data=pd.read_csv(arg["dataset"])
 
 
 
@@ -94,26 +50,19 @@ def encode_label(data):
             label_bins[c] = lb
     return data,label_bins
 
-data=prepare_dataset(data)
 
-### ENCODING
-# qua devo fare l'encoding di Gender e Filter
-
-data,label_bins=encode_label(data)
+def data_to_model(data):
 
 
+    data=prepare_dataset(data)
+
+    ### ENCODING
+    # qua devo fare l'encoding di Gender e Filter
+
+    data,label_bins=encode_label(data)
 
 
-### ESPERIMENTI PER MODELLI
-
-
-#preparo X e y
-X=data.drop("ICRP_103_mSv",axis=1)
-y=data["ICRP_103_mSv"]
-
-
-print(X["Min_mAs"].describe())
-
-report.write(f"{X.columns}")
-
-
+    #preparo X e y
+    X=data.drop("ICRP_103_mSv",axis=1)
+    y=data["ICRP_103_mSv"]
+    return X,y

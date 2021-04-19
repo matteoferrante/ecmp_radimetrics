@@ -1,5 +1,5 @@
 Index(['Gender', 'Weight', 'Height', 'kVp', 'Mean_mAs', 'Min_mAs', 'Max_mAs',
        'Nominal_mA', 'Rotation_Time', 'Collimation', 'Pitch', 'Filter_Type',
        'CTDIvol_Body_mGy', 'CTDIvol_Head_mGy', 'DLP_Body_mGy_cm',
-       'DLP_Head_mGy_cm', 'ICRP_103_mSv', 'Age'],
+       'DLP_Head_mGy_cm', 'Age'],
       dtype='object')

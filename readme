@@ -1,3 +1,20 @@
 Questo progetto contiene tutti gli script necessari per la presentazione al congresso ECMP
 
 1. Caricamento dati - Training e tuning del modello
+2. Esperimenti con Random Forest, SVM, DoseNet, MLP
+
+   plain_rf -> training di random forest con iperparametri di default
+   MLPRegressor -> training di mlp regressor con iperparametri di default
+   svm -> training di svm regressor con iperparametri di default
+   DoseNet -> rete neurale per regressione ma da sistemare
+
+
+
+
+ [] da fare (normalzzazione in SVM, cross validation in dosenet)
+
+ [] da fare validation su dati interni
+
+ [] da fare fine tuning su modello
+
+ 3. test_physico -> prima prova su dati esterni
