@@ -34,20 +34,30 @@ class RadimetricsPreprocessor:
 
     def check_height(self):
 
+        self.data.Height = pd.to_numeric(self.data.Height, downcast="float")
         if self.data.Height.mean()<100:
             print(f"\t\t- Height seems to be in m. Converting to cm")
-            self.data.Height=self.data.Height*100
+            self.data.Height=self.data.Height.apply(lambda x:float(x)*100)
 
 
     def calc_age(self,string):
         today = date.today()
+        sep="-"
+
         try:
-            s = string.split("-")
-            f = datetime(int(s[0]), int(s[1]), int(s[2]))
+
+            s = string.split(sep)
+            if len(s[0])>len(s[2]):
+                #ordine aaaa-mm-dd
+                f = datetime(int(s[0]), int(s[1]), int(s[2]))
+            else:
+                #ordine dd-mm-aaaa
+                f = datetime(int(s[2]), int(s[1]), int(s[0]))
             time_difference = relativedelta(today, f)
             return int(time_difference.years)
 
         except Exception as e:
+            print(e)
             return np.nan
 
     def drop_columns(self,to_drop):
@@ -58,10 +68,13 @@ class RadimetricsPreprocessor:
 
     def dropna(self,subset):
 
-        print(f"[INFO] Dropping Nan in {subset}")
+        print(f"[INFO] Dropping Nan in {subset}: Initial lenght {len(self.data)}")
 
         self.data.dropna(
             subset=subset,inplace=True)
+
+        print(f"[INFO] Dropped Nan in {subset}: Final lenght {len(self.data)}")
+
         return self.data
 
 

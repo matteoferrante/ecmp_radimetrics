@@ -14,11 +14,16 @@ def prepare_dataset(data):
     #definisco colonne da non usare
 
     to_drop=['Device',"Acquisition_Type","Acquisition_Protocol_Name","Series_Description","mAs_Modulated","CTDIvol_Head_Max_mGy","CTDIvol_Body_Max_mGy"]
-    pre.drop_columns(to_drop)
+    try:
+        pre.drop_columns(to_drop)
+    except:
+        print(f"[INFO] could not remove those columns.")
 
     extra_drop=["Description"] #provo a eliminare anche la description
-    pre.drop_columns(extra_drop)
-
+    try:
+        pre.drop_columns(extra_drop)
+    except:
+        print(f"[INFO] could not remove Description. Maybe it's already been removed.")
 
 
     #nan removing
