@@ -1,4 +1,4 @@
-"""RANDOM FOREST PLAIN"""
+"""USING BEST PARAMETERS FOR CROSS VALIDATION OF RANDOM FOREST"""
 
 import pandas as pd
 import numpy as np
@@ -34,7 +34,7 @@ arg=vars(ap.parse_args())
 
 
 os.makedirs(r"esperimenti\plain_rf",exist_ok=True)
-report=open(r"esperimenti\plain_rf\report_plain_rf", "w")
+report=open(r"esperimenti\plain_rf\finetuned_cv_rf", "w")
 
 #load data
 
@@ -43,13 +43,13 @@ X,y=data_to_model(pd.read_csv(arg["dataset"]))
 
 ## PLAIN RANDOM FOREST
 
-report.write("ESPERIMENTO 1. PLAIN RANDOMFOREST REGRESSOR:\n")
-report.write("\t\t Dati non riscalati\n\n")
+report.write("ESPERIMENTO 3. FINE TUNED RANDOMFOREST REGRESSOR:\n")
+report.write("\t\t Dati non riscalati, best paramaters\n\n")
 
 
 scoring = { 'r2': 'r2',"explained_variance_score":'explained_variance',"max error":'max_error'}
 #scoring=make_scorer(explained_variance_score,max_error,mean_absolute_error,r2_score)
-regr=RandomForestRegressor()
+regr=RandomForestRegressor( max_features='sqrt',  n_estimators=1000)
 scores= cross_validate(regr, X, y, cv=10,n_jobs=-1,verbose=1)
 
 print(scores)
@@ -88,7 +88,7 @@ report.write(f"max_error score: {max_er}\n")
 
 
 
-filename = r'esperimenti\plain_rf\plain_rf.sav'
+filename = r'esperimenti\plain_rf\finetuned_last_rf.sav'
 pickle.dump(regr, open(filename, 'wb'))
 print(f"[INFO] Model saved")
 
@@ -120,6 +120,7 @@ fig,ax=plt.subplots(1)
 df=pd.DataFrame.from_dict([features])
 sns.set_theme(style="whitegrid")
 sns.barplot( data=df,ax=ax)
+
 ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 plt.tight_layout()
-plt.savefig(r'esperimenti\plain_rf\features.png')
+plt.savefig(r'esperimenti\plain_rf\finetuned_features.png')

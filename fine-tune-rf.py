@@ -1,14 +1,14 @@
-"""SUPPORT VECTOR MACHINE"""
+"""Questo codice è per fare il fine tuning della random forest"""
+
 
 import pandas as pd
 import numpy as np
-
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
-from sklearn.svm import SVR
+from sklearn.preprocessing import LabelEncoder
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_validate
@@ -34,68 +34,43 @@ arg=vars(ap.parse_args())
 
 
 
-os.makedirs(r"esperimenti\svm",exist_ok=True)
-report=open(r"esperimenti\svm\svm", "w")
+os.makedirs(r"esperimenti\plain_rf",exist_ok=True)
+report=open(r"esperimenti\plain_rf\report_tuned_rf", "w")
 
 #load data
 
 print(f"[INFO] Reading data from {arg['dataset']}")
-
-
-
-
 X,y=data_to_model(pd.read_csv(arg["dataset"]))
 
 ## PLAIN RANDOM FOREST
 
-report.write("ESPERIMENTO 1. PLAIN SVM REGRESSOR:\n")
-report.write("\t\t Dati normalizzati\n\n")
-
-mm=MinMaxScaler()
-
-X=mm.fit_transform(X)
+report.write("ESPERIMENTO 2. FINE-TUNING RANDOMFOREST REGRESSOR:\n")
+report.write("\t\t Dati non riscalati\n\n")
 
 
+scoring = { 'r2': 'r2',"explained_variance_score":'explained_variance',"max error":'max_error'}
 #scoring=make_scorer(explained_variance_score,max_error,mean_absolute_error,r2_score)
-regr=SVR()
-scores= cross_validate(regr, X, y, cv=10,n_jobs=-1,verbose=1)
+regr=RandomForestRegressor()
 
-print(scores)
-
-report.write(f"10 fold-cross validation: \n{scores}\n")
-
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=42)
-
-print(f"[INFO] Fitting model")
-regr.fit(X_train,y_train)
-
-y_pred=regr.predict(X_test)
+print(f"[INFO] Running cross validation for fine tuning")
 
 
 
-print(f"Fitted r2 model score: {regr.score(X_test,y_test)}")
+param_grid={'bootstrap':[True],'min_samples_leaf': [1,5],'max_features':['auto', 'sqrt'],'n_estimators':[100,500,1000]}
 
-report.write(f"Fitted r2 model score: {regr.score(X_test,y_test)}\n")
+grid_search=GridSearchCV(estimator=regr,param_grid=param_grid,cv=3,n_jobs=-1,verbose=2,scoring=scoring,refit='r2')
 
+grid_search.fit(X,y)
 
+best_params=grid_search.best_params_
+best_regr=grid_search.best_estimator_
 
+print(f"[INFO] Best params: {best_params}\n saving best model..")
+report.write(f"Params Grid: {param_grid}\n\n")
+report.write(f"best_params {best_params}\n\n")
 
-# MEAN ABSOLUTE ERRROR
-mae=mean_absolute_error(y_test,y_pred)
-print(f"mean_absolute_error score: {mae}")
+### SAVE MODEL
 
-report.write(f"mean_absolute_error score: {mae}\n")
-
-
-# MAX ERROR
-max_er=max_error(y_test,y_pred)
-print(f"max_error score: {max_er}")
-
-report.write(f"max_error score: {max_er}\n")
-
-
-
-filename = r'esperimenti\svm\svm.sav'
+filename = r'esperimenti\plain_rf\finetuned_rf.sav'
 pickle.dump(regr, open(filename, 'wb'))
 print(f"[INFO] Model saved")

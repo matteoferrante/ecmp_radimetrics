@@ -5,11 +5,11 @@ from Preprocess.RadimetricsPreprocessor import RadimetricsPreprocessor
 
 
 
-def prepare_dataset(data):
+def prepare_dataset(data,sep="-"):
     pre=RadimetricsPreprocessor(data)
 
 
-    pre.basic_filter()   # basic filter -> rimuove indici e calcola l'età
+    pre.basic_filter(sep=sep)   # basic filter -> rimuove indici e calcola l'età
 
     #definisco colonne da non usare
 
@@ -19,7 +19,7 @@ def prepare_dataset(data):
     except:
         print(f"[INFO] could not remove those columns.")
 
-    extra_drop=["Description"] #provo a eliminare anche la description
+    extra_drop=["Description",'Filter_Type'] #provo a eliminare anche la description
     try:
         pre.drop_columns(extra_drop)
     except:
@@ -27,7 +27,7 @@ def prepare_dataset(data):
 
 
     #nan removing
-    subset=['Age', 'Weight','Height','Gender','Filter_Type', "ICRP_103_mSv"]
+    subset=['Age', 'Weight','Height','Gender', "ICRP_103_mSv","kVp","Nominal_mA"]
 
     pre.dropna(subset=subset)
     data=pre.data
@@ -44,29 +44,36 @@ def prepare_dataset(data):
     return data
 
 def encode_label(data):
-    label_bins = {}
+    #label_bins = {}
     for c in data.columns:
 
         if data[c].dtype == object:
             print(f"[INFO] binarizing {c}")
-            n = data[c].values
-            lb = LabelEncoder()
-            data[c] = lb.fit_transform(data[c].values)
-            label_bins[c] = lb
-    return data,label_bins
+            #n = data[c].values
+            #lb = LabelEncoder()
+            data[c] = data[c].map({"M":0,"F":1,"O":0})  #rimappo gli other come M
+            #label_bins[c] = lb
+    return data
 
 
-def data_to_model(data):
+def data_to_model(data,sep="-",thr=None):
 
 
-    data=prepare_dataset(data)
+    data=prepare_dataset(data,sep=sep)
 
     ### ENCODING
     # qua devo fare l'encoding di Gender e Filter
 
-    data,label_bins=encode_label(data)
+#    data,label_bins=encode_label(data)
+
+    data=encode_label(data)
+
+    #se presente soglia la applico
+    if thr is not None:
+        data=data[data["ICRP_103_mSv"]>=thr]
 
 
+    print(f"[INFO] At the end of pre-processing the output is composed by {len(data)} samples")
     #preparo X e y
     X=data.drop("ICRP_103_mSv",axis=1)
     y=data["ICRP_103_mSv"]

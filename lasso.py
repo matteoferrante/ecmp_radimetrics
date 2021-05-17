@@ -1,14 +1,15 @@
-"""RANDOM FOREST PLAIN"""
+"""LASSO"""
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelEncoder
-
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.svm import SVR
+from sklearn.linear_model import Lasso
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import confusion_matrix
@@ -33,23 +34,30 @@ arg=vars(ap.parse_args())
 
 
 
-os.makedirs(r"esperimenti\plain_rf",exist_ok=True)
-report=open(r"esperimenti\plain_rf\report_plain_rf", "w")
+os.makedirs(r"esperimenti\lasso",exist_ok=True)
+report=open(r"esperimenti\lasso\lasso", "w")
 
 #load data
 
 print(f"[INFO] Reading data from {arg['dataset']}")
+
+
+
+
 X,y=data_to_model(pd.read_csv(arg["dataset"]))
 
 ## PLAIN RANDOM FOREST
 
-report.write("ESPERIMENTO 1. PLAIN RANDOMFOREST REGRESSOR:\n")
-report.write("\t\t Dati non riscalati\n\n")
+report.write("ESPERIMENTO 1. LASSO REGRESSOR:\n")
+report.write("\t\t Dati normalizzati\n\n")
+
+mm=MinMaxScaler()
+
+X=mm.fit_transform(X)
 
 
-scoring = { 'r2': 'r2',"explained_variance_score":'explained_variance',"max error":'max_error'}
 #scoring=make_scorer(explained_variance_score,max_error,mean_absolute_error,r2_score)
-regr=RandomForestRegressor()
+regr=Lasso()
 scores= cross_validate(regr, X, y, cv=10,n_jobs=-1,verbose=1)
 
 print(scores)
@@ -88,38 +96,6 @@ report.write(f"max_error score: {max_er}\n")
 
 
 
-filename = r'esperimenti\plain_rf\plain_rf.sav'
+filename = r'esperimenti\lasso\lasso.sav'
 pickle.dump(regr, open(filename, 'wb'))
 print(f"[INFO] Model saved")
-
-
-
-### FEATURE IMPORTANCES
-
-fi_vals=regr.feature_importances_
-fi_names=X.columns
-
-features=dict(zip(fi_names,fi_vals))
-features=dict(sorted(features.items(),key=lambda x:x[1],reverse=True))
-
-print(features)
-report.write(f"feature importances: {features}\n")
-
-
-
-### LAVORARE QUA PER FARE BENE L'IMMAGINE!!
-
-
-fig,ax=plt.subplots(1)
-
-#ax.bar(features.keys(),features.values())
-
-
-
-
-df=pd.DataFrame.from_dict([features])
-sns.set_theme(style="whitegrid")
-sns.barplot( data=df,ax=ax)
-ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-plt.tight_layout()
-plt.savefig(r'esperimenti\plain_rf\features.png')

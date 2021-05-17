@@ -2,7 +2,11 @@
 import argparse
 import os
 import pandas as pd
+from keras.callbacks import EarlyStopping
+from keras.optimizers import Adam
+from keras.regularizers import l1
 from sklearn.model_selection import RepeatedKFold, cross_val_score, train_test_split
+from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import Adadelta
@@ -11,15 +15,20 @@ from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 from Preprocess.data_to_model import data_to_model
 from matplotlib import pyplot
 
+import numpy as np
+
 def buildmodel():
     model= Sequential([
-        Dense(17, activation="relu"),
-        Dense(100, activation="relu"),
+        Dense(16, activation="sigmoid"),
+        Dense(64, activation="elu"),
+        Dropout(0.2),
+        Dense(256, activation="elu"),
+        Dense(512, activation="elu"),
         Dropout(0.3),
-        Dense(32,activation="relu"),
+        Dense(64,activation="elu"),
         Dense(1)
     ])
-    model.compile(optimizer='adam', loss='mse', metrics=['mse'])
+    #model.compile(optimizer='adam', loss='mse', metrics=['mse'])
     return(model)
 
 
@@ -43,35 +52,53 @@ report=open(r"esperimenti\dosenet\report_dosenet", "w")
 print(f"[INFO] Reading data from {arg['dataset']}")
 X,y=data_to_model(pd.read_csv(arg["dataset"]))
 
-## PLAIN RANDOM FOREST
+
+mm=MinMaxScaler()
+X=X.values
+#X=mm.fit_transform(X)
+
 
 report.write("ESPERIMENTO 1. DOSENET  REGRESSOR:\n")
-report.write("\t\t Dati non riscalati\n\n")
+report.write("\t\t Dati non normalizzati\n\n")
 
 
 
 
 model=buildmodel()
-opt=Adadelta()
+#opt=Adadelta()
 
-X_train, X_test, y_train, y_test = train_test_split(X.values, y.values, test_size=0.10)
+EPOCHS=250
+BS=256
+opt=Adam(lr=1e-3)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y.values, test_size=0.30)
+#X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.15)
 
 
-model.compile(loss='mse', optimizer='adam', metrics=['mse', 'mae', 'mape'])
+print(f"[INFO] {X_train.shape}")
 
-history=model.fit(X_train,y_train,epochs=6)
+model.compile(loss='mean_absolute_percentage_error', optimizer=opt, metrics=['mse', 'mae', 'mape'])
 
-model.evaluate(X_test,y_test)
 
-print(history.history)
+early_stopping = EarlyStopping(patience=50,restore_best_weights=True)
 #
+history=model.fit(X_train,y_train,epochs=EPOCHS,validation_split=0.10,batch_size=BS,callbacks=[early_stopping])
+#
+#model.evaluate(X_test,y_test)
+#
+
+
+model.save(r"esperimenti\dosenet\dosenet_model.h5")
+
+print(f"[INFO] Model evalutaion: {model.evaluate(X_test,y_test)}")
+y_pred=model.predict(X_test)
+print(f"[INFO] Info about predictions: m: {np.mean(y_pred)}\t std: {np.std(y_pred)}\n original m: {np.mean(y_test)}\t std: {np.std(y_test)}")
+
+# #
 pyplot.plot(history.history['mse'])
 pyplot.plot(history.history['mae'])
 pyplot.plot(history.history['mape'])
+pyplot.legend()
 pyplot.show()
 
-#
-# estimator= KerasRegressor(build_fn=buildmodel, epochs=10, batch_size=10, verbose=0)
-# kfold= RepeatedKFold(n_splits=5, n_repeats=100)
-# results= cross_val_score(estimator, X.values, y.values, cv=kfold, n_jobs=2)  # 2 cpus
-# results.mean()  # Mean MSE
+

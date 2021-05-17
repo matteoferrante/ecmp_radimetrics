@@ -16,7 +16,7 @@ class RadimetricsPreprocessor:
         self.data=data
 
 
-    def basic_filter(self,calc_age=True,check_height=True):
+    def basic_filter(self,calc_age=True,check_height=True,sep="-"):
         print(f"[INFO] Performing first filtration")
         if "Unnamed: 0" in self.data.columns:
             print(f"\t\t -Drop index column")
@@ -24,7 +24,7 @@ class RadimetricsPreprocessor:
 
         if calc_age:
             print(f"\t\t -Age Calculation\n")
-            self.data["Age"] = self.data["DOB"].apply(self.calc_age)
+            self.data["Age"] = self.data["DOB"].apply(lambda x: self.calc_age(x,sep))
             # drop the birthday column and all the rows where age is nan
             self.data.drop(["DOB"], axis=1, inplace=True)
         if check_height:
@@ -40,13 +40,13 @@ class RadimetricsPreprocessor:
             self.data.Height=self.data.Height.apply(lambda x:float(x)*100)
 
 
-    def calc_age(self,string):
+    def calc_age(self,string,sep="-"):
+
         today = date.today()
-        sep="-"
 
         try:
-
-            s = string.split(sep)
+            ss=str(string)
+            s = ss.split(sep)
             if len(s[0])>len(s[2]):
                 #ordine aaaa-mm-dd
                 f = datetime(int(s[0]), int(s[1]), int(s[2]))
@@ -68,8 +68,10 @@ class RadimetricsPreprocessor:
 
     def dropna(self,subset):
 
+
         print(f"[INFO] Dropping Nan in {subset}: Initial lenght {len(self.data)}")
 
+        print(self.data.isna().sum())
         self.data.dropna(
             subset=subset,inplace=True)
 
